@@ -13,11 +13,13 @@
     rel="stylesheet"
   />
 
+  <!-- Include Papa Parse Library from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
   <!-- Inline CSS -->
   <style>
     /* =============== BASE RESET & GLOBAL STYLES =============== */
-    html,
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
@@ -32,22 +34,17 @@
       display: flex;
       flex-direction: column;
     }
-
-    /* Headings use Lora */
     h1, h2, h3, h4, h5, h6 {
       font-family: "Lora", serif;
       margin: 0.8em 0 0.4em;
       font-weight: 600;
       color: #373737;
     }
-
     a {
       color: #373737;
       text-decoration: underline;
       text-underline-offset: 0.3em;
     }
-
-    /* Container */
     .container {
       width: 90%;
       max-width: 1200px;
@@ -69,7 +66,7 @@
       font-weight: 600;
     }
 
-    /* =============== SUMMARY BAR =============== */
+    /* =============== SUMMARY ALERT =============== */
     .summary-alert {
       background: #fff;
       border: 1px solid #373737;
@@ -99,7 +96,7 @@
       color: #999;
     }
 
-    /* =============== TABLE =============== */
+    /* =============== TABLE STYLES =============== */
     .table-container {
       overflow-x: auto;
       background: #fff;
@@ -109,7 +106,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 600px;
+      min-width: 800px;
     }
     thead {
       background: #f5f5f5;
@@ -127,6 +124,10 @@
       color: #373737;
       cursor: pointer;
       user-select: none;
+      position: relative;
+    }
+    th.sorted {
+      background-color: #e0e0e0;
     }
     th .sort-indicator {
       margin-left: 0.5rem;
@@ -149,15 +150,17 @@
       margin: 0;
       font-weight: 300;
     }
+    footer.footer .last-updated {
+      display: block;
+      font-size: 0.85rem;
+      margin-top: 0.3rem;
+      color: #555;
+    }
 
     /* =============== RESPONSIVE =============== */
     @media (max-width: 600px) {
-      .summary-alert {
-        font-size: 0.95rem;
-      }
-      th, td {
-        font-size: 0.9rem;
-      }
+      .summary-alert { font-size: 0.95rem; }
+      th, td { font-size: 0.9rem; }
     }
   </style>
 </head>
@@ -186,20 +189,20 @@
       <table id="ibciTable">
         <thead>
           <tr>
-            <th onclick="sortTable('patientID')">Patient ID <span id="sortIndicator-patientID" class="sort-indicator"></span></th>
-            <th onclick="sortTable('year')">Year of Implant <span id="sortIndicator-year" class="sort-indicator"></span></th>
-            <th onclick="sortTable('institution')">Institution/Company <span id="sortIndicator-institution" class="sort-indicator"></span></th>
-            <th onclick="sortTable('deviceType')">Device Type <span id="sortIndicator-deviceType" class="sort-indicator"></span></th>
-            <th onclick="sortTable('sex')">Sex <span id="sortIndicator-sex" class="sort-indicator"></span></th>
-            <th onclick="sortTable('age')">Age at Implant <span id="sortIndicator-age" class="sort-indicator"></span></th>
-            <th onclick="sortTable('etiology')">Etiology of Paralysis <span id="sortIndicator-etiology" class="sort-indicator"></span></th>
-            <th onclick="sortTable('tasks')">Tasks Performed <span id="sortIndicator-tasks" class="sort-indicator"></span></th>
-            <th onclick="sortTable('duration')">Duration of Implant <span id="sortIndicator-duration" class="sort-indicator"></span></th>
-            <th onclick="sortTable('publications')">Publications <span id="sortIndicator-publications" class="sort-indicator"></span></th>
+            <th id="th-patientID" onclick="sortTable('patientID')">Patient ID <span id="sortIndicator-patientID" class="sort-indicator"></span></th>
+            <th id="th-year" onclick="sortTable('year')">Year of Implant <span id="sortIndicator-year" class="sort-indicator"></span></th>
+            <th id="th-institution" onclick="sortTable('institution')">Institution/Company <span id="sortIndicator-institution" class="sort-indicator"></span></th>
+            <th id="th-deviceType" onclick="sortTable('deviceType')">Device Type <span id="sortIndicator-deviceType" class="sort-indicator"></span></th>
+            <th id="th-sex" onclick="sortTable('sex')">Sex <span id="sortIndicator-sex" class="sort-indicator"></span></th>
+            <th id="th-age" onclick="sortTable('age')">Age at Implant <span id="sortIndicator-age" class="sort-indicator"></span></th>
+            <th id="th-etiology" onclick="sortTable('etiology')">Etiology of Paralysis <span id="sortIndicator-etiology" class="sort-indicator"></span></th>
+            <th id="th-tasks" onclick="sortTable('tasks')">Tasks Performed <span id="sortIndicator-tasks" class="sort-indicator"></span></th>
+            <th id="th-duration" onclick="sortTable('duration')">Duration of Implant <span id="sortIndicator-duration" class="sort-indicator"></span></th>
+            <th id="th-publications" onclick="sortTable('publications')">Publications <span id="sortIndicator-publications" class="sort-indicator"></span></th>
           </tr>
         </thead>
         <tbody id="ibciTableBody">
-          <!-- Rows will be populated by JavaScript -->
+          <!-- Rows populated dynamically -->
         </tbody>
       </table>
     </div>
@@ -208,90 +211,66 @@
   <!-- Footer -->
   <footer class="footer">
     <p>Created by Jamie Brannigan and Esmee Dohle</p>
+    <span class="last-updated">Last updated: 9th February 2025</span>
   </footer>
 
   <!-- Inline JavaScript -->
   <script>
-    // Global sort state
-    let currentSortKey = "year";
-    // For "year", default is descending (-1); for other columns, default ascending (1).
-    let currentSortDirection = -1;
+    // Global sort state – default sort by patientID.
+    let currentSortKey = "patientID";
+    let currentSortDirection = 1; // 1 for ascending, -1 for descending
 
-    // Sample data – note the additional fields and new order.
-    const ibciPatients = [
-      {
-        patientID: "P1",
-        year: 2020,
-        institution: "BrainGate Consortium (John Radcliffe Hospital)",
-        deviceType: "Utah Array",
-        sex: "Male",
-        age: 45,
-        etiology: "Amyotrophic Lateral Sclerosis",
-        tasks: "Cursor control, typing",
-        duration: 3,  // years
-        publications: [
-          { display: "Hochberg et al, 2006", link: "https://www.nature.com/articles/nature07479" },
-          { display: "Brandman et al, 2018", link: "https://elifesciences.org/articles/18554" }
-        ]
-      },
-      {
-        patientID: "P2",
-        year: 2016,
-        institution: "Grenoble University Hospital",
-        deviceType: "ECoG Grid",
-        sex: "Female",
-        age: 50,
-        etiology: "Stroke",
-        tasks: "Communication, target selection",
-        duration: 5,  // years
-        publications: [
-          { display: "Vansteensel et al, 2016", link: "https://www.nejm.org/doi/10.1056/NEJMoa1608085" }
-        ]
-      },
-      {
-        patientID: "P3",
-        year: 2021,
-        institution: "Synchron Center, Melbourne",
-        deviceType: "Endovascular Stentrode",
-        sex: "Male",
-        age: 40,
-        etiology: "Spinal Cord Injury",
-        tasks: "Robotic arm control, digital tasks",
-        duration: 2,  // years
-        publications: [
-          { display: "Oxley et al, 2021", link: "https://jnis.bmj.com/content/13/2/102" }
-        ]
+    // This will hold the patient data from the spreadsheet.
+    let ibciPatients = [];
+
+    // Google Sheets CSV URL – REPLACE "your-spreadsheet-id" with your actual ID.
+    const googleSheetCSVUrl = "https://docs.google.com/spreadsheets/d/your-spreadsheet-id/pub?output=csv";
+
+    // Helper: Parse publications from a string.
+    // Expecting a format such as:
+    // "Vansteensel et al, 2016|https://link; Brandman et al, 2018|https://link"
+    function parsePublications(pubString) {
+      if (!pubString) return [];
+      return pubString.split(";").map(item => {
+        const parts = item.split("|");
+        return { display: parts[0].trim(), link: parts[1] ? parts[1].trim() : "#" };
+      });
+    }
+
+    // Fetch data from the Google Sheet and then populate the table.
+    Papa.parse(googleSheetCSVUrl, {
+      download: true,
+      header: true,
+      complete: function(results) {
+        // Map the CSV records into our data structure.
+        ibciPatients = results.data.map(record => ({
+          patientID: record["Patient ID"],
+          year: parseInt(record["Year of Implant"]),
+          institution: record["Institution/Company"],
+          deviceType: record["Device Type"],
+          sex: record["Sex"],
+          age: parseInt(record["Age at Implant"]),
+          etiology: record["Etiology of Paralysis"],
+          tasks: record["Tasks Performed"],
+          duration: parseInt(record["Duration of Implant"]), // assumed to be in years
+          publications: parsePublications(record["Publications"])
+        }));
+        // After fetching, sort and populate.
+        sortData(currentSortKey, currentSortDirection);
+        populateTable();
+        updateSortIndicators();
       }
-      // Add or modify additional records as needed.
-    ];
+    });
 
-    // When the page loads, sort the data by default and populate the table.
-    window.onload = function() {
-      sortData(currentSortKey, currentSortDirection);
-      populateTable();
-      updateSortIndicators();
-    };
-
-    // Function to sort the ibciPatients array.
+    // Generic data sort function.
     function sortData(key, direction) {
       ibciPatients.sort((a, b) => {
-        let valA = a[key];
-        let valB = b[key];
+        let valA = a[key], valB = b[key];
 
-        // For publications, sort by the first publication’s display text.
         if (key === "publications") {
           valA = (a.publications && a.publications.length) ? a.publications[0].display : "";
           valB = (b.publications && b.publications.length) ? b.publications[0].display : "";
         }
-
-        // For year, implement secondary sort by institution (alphabetically ascending) when equal.
-        if (key === "year" && valA === valB) {
-          let instA = a.institution.toLowerCase();
-          let instB = b.institution.toLowerCase();
-          return instA.localeCompare(instB) * 1;
-        }
-
-        // Determine numeric vs string comparison.
         if (typeof valA === "number" && typeof valB === "number") {
           return (valA - valB) * direction;
         } else {
@@ -302,66 +281,60 @@
       });
     }
 
-    // Called when a header is clicked to sort by a given key.
+    // When a header is clicked to sort by a given key.
     function sortTable(key) {
       if (currentSortKey === key) {
         currentSortDirection = -currentSortDirection;
       } else {
         currentSortKey = key;
-        currentSortDirection = (key === "year") ? -1 : 1;
+        currentSortDirection = 1;
       }
       sortData(currentSortKey, currentSortDirection);
       populateTable();
       updateSortIndicators();
     }
 
-    // Update the sort indicators in header cells.
+    // Update sort indicators and add visual highlight to the sorted column header.
     function updateSortIndicators() {
       const sortKeys = ["patientID", "year", "institution", "deviceType", "sex", "age", "etiology", "tasks", "duration", "publications"];
       sortKeys.forEach(key => {
         const indicator = document.getElementById("sortIndicator-" + key);
+        const th = document.getElementById("th-" + key);
         if (key === currentSortKey) {
           indicator.textContent = currentSortDirection === 1 ? "▲" : "▼";
+          th.classList.add("sorted");
         } else {
           indicator.textContent = "";
+          th.classList.remove("sorted");
         }
       });
     }
 
-    // Populate the table body with current data.
+    // Populate the table with data.
     function populateTable() {
       const tbody = document.getElementById("ibciTableBody");
       tbody.innerHTML = "";
-
       ibciPatients.forEach(patient => {
         const row = document.createElement("tr");
 
-        // Helper function to create a table cell.
+        // Create a cell for each column.
         const createCell = (content) => {
           const cell = document.createElement("td");
           cell.textContent = content;
           return cell;
         };
 
-        // Patient ID
         row.appendChild(createCell(patient.patientID));
-        // Year of Implant
         row.appendChild(createCell(patient.year));
-        // Institution/Company
         row.appendChild(createCell(patient.institution));
-        // Device Type
         row.appendChild(createCell(patient.deviceType));
-        // Sex
         row.appendChild(createCell(patient.sex));
-        // Age at Implant
         row.appendChild(createCell(patient.age));
-        // Etiology of Paralysis
         row.appendChild(createCell(patient.etiology));
-        // Tasks Performed
         row.appendChild(createCell(patient.tasks));
-        // Duration of Implant (display as “X yrs”)
         row.appendChild(createCell(patient.duration + " yrs"));
-        // Publications – display each as "Author et al, Year" (hyperlinked)
+
+        // Publications cell – display each as "Author et al, Year" (as hyperlink)
         const pubCell = document.createElement("td");
         if (patient.publications && patient.publications.length > 0) {
           const pubItems = patient.publications.map(pub => {
@@ -382,16 +355,15 @@
       });
     }
 
-    // Filter table rows based on search input.
+    // Filter table rows based on the search input.
     function filterTable() {
       const input = document.getElementById("searchInput");
       const filter = input.value.toLowerCase();
       const tbody = document.getElementById("ibciTableBody");
       const rows = tbody.getElementsByTagName("tr");
-
       for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const cells = row.getElementsByTagName("td");
+        let row = rows[i];
+        let cells = row.getElementsByTagName("td");
         let match = false;
         for (let j = 0; j < cells.length; j++) {
           if (cells[j].textContent.toLowerCase().indexOf(filter) > -1) {
@@ -405,6 +377,7 @@
   </script>
 </body>
 </html>
+
 
 
 
