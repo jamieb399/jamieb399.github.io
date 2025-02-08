@@ -5,7 +5,7 @@
   <title>International iBCI Patient Registry</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- Google Fonts: Using Lora for headings and Inter as a fallback -->
+  <!-- Google Fonts: Using Lora for headings and Inter for body text -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -169,7 +169,7 @@
     </div>
   </nav>
 
-  <!-- Main content -->
+  <!-- Main Content -->
   <div class="container">
     <!-- Summary Alert -->
     <div class="summary-alert">
@@ -186,19 +186,20 @@
       <table id="ibciTable">
         <thead>
           <tr>
-            <th onclick="sortTable('year')">Year of Implant <span id="sortIndicator-year" class="sort-indicator"></span></th>
             <th onclick="sortTable('patientID')">Patient ID <span id="sortIndicator-patientID" class="sort-indicator"></span></th>
-            <th onclick="sortTable('institution')">Institution / Center <span id="sortIndicator-institution" class="sort-indicator"></span></th>
+            <th onclick="sortTable('year')">Year of Implant <span id="sortIndicator-year" class="sort-indicator"></span></th>
+            <th onclick="sortTable('institution')">Institution/Company <span id="sortIndicator-institution" class="sort-indicator"></span></th>
             <th onclick="sortTable('deviceType')">Device Type <span id="sortIndicator-deviceType" class="sort-indicator"></span></th>
             <th onclick="sortTable('sex')">Sex <span id="sortIndicator-sex" class="sort-indicator"></span></th>
             <th onclick="sortTable('age')">Age at Implant <span id="sortIndicator-age" class="sort-indicator"></span></th>
             <th onclick="sortTable('etiology')">Etiology of Paralysis <span id="sortIndicator-etiology" class="sort-indicator"></span></th>
             <th onclick="sortTable('tasks')">Tasks Performed <span id="sortIndicator-tasks" class="sort-indicator"></span></th>
+            <th onclick="sortTable('duration')">Duration of Implant <span id="sortIndicator-duration" class="sort-indicator"></span></th>
             <th onclick="sortTable('publications')">Publications <span id="sortIndicator-publications" class="sort-indicator"></span></th>
           </tr>
         </thead>
         <tbody id="ibciTableBody">
-          <!-- Rows will be inserted here via JavaScript -->
+          <!-- Rows will be populated by JavaScript -->
         </tbody>
       </table>
     </div>
@@ -209,56 +210,59 @@
     <p>Created by Jamie Brannigan and Esmee Dohle</p>
   </footer>
 
-  <!-- In-line JavaScript -->
+  <!-- Inline JavaScript -->
   <script>
-    // Global sort state variables
+    // Global sort state
     let currentSortKey = "year";
-    // For "year", default is descending (most recent first); for others, default ascending.
-    let currentSortDirection = -1; 
+    // For "year", default is descending (-1); for other columns, default ascending (1).
+    let currentSortDirection = -1;
 
-    // Example Data – note that additional fields have been added.
+    // Sample data – note the additional fields and new order.
     const ibciPatients = [
       {
-        year: 2021,
-        patientID: "P3",
-        institution: "Synchron Center, Melbourne",
-        deviceType: "Endovascular Stentrode",
-        sex: "Male",
-        age: 40,
-        etiology: "Spinal Cord Injury",
-        tasks: "Robotic arm control, digital tasks",
-        publications: [
-          { display: "Oxley et al, 2021", link: "https://jnis.bmj.com/content/13/2/102" }
-        ]
-      },
-      {
-        year: 2016,
-        patientID: "P2",
-        institution: "Grenoble University Hospital",
-        deviceType: "ECoG Grid",
-        sex: "Female",
-        age: 50,
-        etiology: "Stroke",
-        tasks: "Communication, target selection",
-        publications: [
-          { display: "Vansteensel et al, 2016", link: "https://www.nejm.org/doi/10.1056/NEJMoa1608085" }
-        ]
-      },
-      {
-        year: 2020,
         patientID: "P1",
+        year: 2020,
         institution: "BrainGate Consortium (John Radcliffe Hospital)",
         deviceType: "Utah Array",
         sex: "Male",
         age: 45,
         etiology: "Amyotrophic Lateral Sclerosis",
         tasks: "Cursor control, typing",
+        duration: 3,  // years
         publications: [
           { display: "Hochberg et al, 2006", link: "https://www.nature.com/articles/nature07479" },
           { display: "Brandman et al, 2018", link: "https://elifesciences.org/articles/18554" }
         ]
+      },
+      {
+        patientID: "P2",
+        year: 2016,
+        institution: "Grenoble University Hospital",
+        deviceType: "ECoG Grid",
+        sex: "Female",
+        age: 50,
+        etiology: "Stroke",
+        tasks: "Communication, target selection",
+        duration: 5,  // years
+        publications: [
+          { display: "Vansteensel et al, 2016", link: "https://www.nejm.org/doi/10.1056/NEJMoa1608085" }
+        ]
+      },
+      {
+        patientID: "P3",
+        year: 2021,
+        institution: "Synchron Center, Melbourne",
+        deviceType: "Endovascular Stentrode",
+        sex: "Male",
+        age: 40,
+        etiology: "Spinal Cord Injury",
+        tasks: "Robotic arm control, digital tasks",
+        duration: 2,  // years
+        publications: [
+          { display: "Oxley et al, 2021", link: "https://jnis.bmj.com/content/13/2/102" }
+        ]
       }
-      // Additional records can be added here.
+      // Add or modify additional records as needed.
     ];
 
     // When the page loads, sort the data by default and populate the table.
@@ -274,26 +278,23 @@
         let valA = a[key];
         let valB = b[key];
 
-        // For the "publications" column, sort by the first publication's display text.
+        // For publications, sort by the first publication’s display text.
         if (key === "publications") {
           valA = (a.publications && a.publications.length) ? a.publications[0].display : "";
           valB = (b.publications && b.publications.length) ? b.publications[0].display : "";
         }
 
-        // If sorting by year, implement a secondary sort by institution (alphabetically ascending).
-        if (key === "year") {
-          if (valA === valB) {
-            let instA = a.institution.toLowerCase();
-            let instB = b.institution.toLowerCase();
-            return instA.localeCompare(instB) * 1;
-          }
+        // For year, implement secondary sort by institution (alphabetically ascending) when equal.
+        if (key === "year" && valA === valB) {
+          let instA = a.institution.toLowerCase();
+          let instB = b.institution.toLowerCase();
+          return instA.localeCompare(instB) * 1;
         }
 
-        // Determine if the value is numeric.
+        // Determine numeric vs string comparison.
         if (typeof valA === "number" && typeof valB === "number") {
           return (valA - valB) * direction;
         } else {
-          // Convert to string and compare case-insensitively.
           valA = String(valA).toLowerCase();
           valB = String(valB).toLowerCase();
           return valA.localeCompare(valB) * direction;
@@ -303,12 +304,10 @@
 
     // Called when a header is clicked to sort by a given key.
     function sortTable(key) {
-      // If the column is already sorted, toggle direction; otherwise, set new key.
       if (currentSortKey === key) {
         currentSortDirection = -currentSortDirection;
       } else {
         currentSortKey = key;
-        // Default sort direction: for year use descending (-1), otherwise ascending (1)
         currentSortDirection = (key === "year") ? -1 : 1;
       }
       sortData(currentSortKey, currentSortDirection);
@@ -316,10 +315,9 @@
       updateSortIndicators();
     }
 
-    // Update sort indicators (simple arrow icons) in header cells.
+    // Update the sort indicators in header cells.
     function updateSortIndicators() {
-      // List of sort keys matching our header IDs.
-      const sortKeys = ["year", "patientID", "institution", "deviceType", "sex", "age", "etiology", "tasks", "publications"];
+      const sortKeys = ["patientID", "year", "institution", "deviceType", "sex", "age", "etiology", "tasks", "duration", "publications"];
       sortKeys.forEach(key => {
         const indicator = document.getElementById("sortIndicator-" + key);
         if (key === currentSortKey) {
@@ -330,7 +328,7 @@
       });
     }
 
-    // Populate the table body with the current ibciPatients array.
+    // Populate the table body with current data.
     function populateTable() {
       const tbody = document.getElementById("ibciTableBody");
       tbody.innerHTML = "";
@@ -338,18 +336,18 @@
       ibciPatients.forEach(patient => {
         const row = document.createElement("tr");
 
-        // Create cells for each column.
-        const createCell = (text) => {
+        // Helper function to create a table cell.
+        const createCell = (content) => {
           const cell = document.createElement("td");
-          cell.textContent = text;
+          cell.textContent = content;
           return cell;
         };
 
-        // Year of Implant
-        row.appendChild(createCell(patient.year));
         // Patient ID
         row.appendChild(createCell(patient.patientID));
-        // Institution / Center
+        // Year of Implant
+        row.appendChild(createCell(patient.year));
+        // Institution/Company
         row.appendChild(createCell(patient.institution));
         // Device Type
         row.appendChild(createCell(patient.deviceType));
@@ -357,17 +355,16 @@
         row.appendChild(createCell(patient.sex));
         // Age at Implant
         row.appendChild(createCell(patient.age));
-        // Etiology
+        // Etiology of Paralysis
         row.appendChild(createCell(patient.etiology));
         // Tasks Performed
         row.appendChild(createCell(patient.tasks));
-        
-        // Publications: display each as "Author et al, Year" separated by a line break.
+        // Duration of Implant (display as “X yrs”)
+        row.appendChild(createCell(patient.duration + " yrs"));
+        // Publications – display each as "Author et al, Year" (hyperlinked)
         const pubCell = document.createElement("td");
         if (patient.publications && patient.publications.length > 0) {
-          // For each publication, create a link.
           const pubItems = patient.publications.map(pub => {
-            // Create an anchor element.
             const a = document.createElement("a");
             a.href = pub.link;
             a.target = "_blank";
@@ -375,7 +372,6 @@
             a.textContent = pub.display;
             return a.outerHTML;
           });
-          // Join with <br> for a compact display.
           pubCell.innerHTML = pubItems.join("<br>");
         } else {
           pubCell.textContent = "N/A";
@@ -409,6 +405,7 @@
   </script>
 </body>
 </html>
+
 
 
 
