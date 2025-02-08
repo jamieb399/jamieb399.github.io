@@ -197,12 +197,11 @@
             <th id="th-age" onclick="sortTable('age')">Age at Implant <span id="sortIndicator-age" class="sort-indicator"></span></th>
             <th id="th-etiology" onclick="sortTable('etiology')">Etiology of Paralysis <span id="sortIndicator-etiology" class="sort-indicator"></span></th>
             <th id="th-tasks" onclick="sortTable('tasks')">Tasks Performed <span id="sortIndicator-tasks" class="sort-indicator"></span></th>
-            <th id="th-duration" onclick="sortTable('duration')">Duration of Implant <span id="sortIndicator-duration" class="sort-indicator"></span></th>
-            <th id="th-publications" onclick="sortTable('publications')">Publications <span id="sortIndicator-publications" class="sort-indicator"></span></th>
+            <th id="th-firstPublication" onclick="sortTable('firstPublication')">First Publication <span id="sortIndicator-firstPublication" class="sort-indicator"></span></th>
           </tr>
         </thead>
         <tbody id="ibciTableBody">
-          <!-- Rows populated dynamically -->
+          <!-- Rows will be populated by JavaScript -->
         </tbody>
       </table>
     </div>
@@ -226,15 +225,18 @@
     // Google Sheets CSV URL – REPLACE "your-spreadsheet-id" with your actual ID.
     const googleSheetCSVUrl = "https://docs.google.com/spreadsheets/d/your-spreadsheet-id/pub?output=csv";
 
-    // Helper: Parse publications from a string.
-    // Expecting a format such as:
-    // "Vansteensel et al, 2016|https://link; Brandman et al, 2018|https://link"
-    function parsePublications(pubString) {
-      if (!pubString) return [];
-      return pubString.split(";").map(item => {
-        const parts = item.split("|");
-        return { display: parts[0].trim(), link: parts[1] ? parts[1].trim() : "#" };
-      });
+    // Parse the "First Publication" field: split by semicolon and take only the first entry.
+    // Expected format: "Vansteensel et al, 2016|https://link; Other pub|https://link2"
+    function parseFirstPublication(pubString) {
+      if (!pubString) return null;
+      const entries = pubString.split(";");
+      const firstEntry = entries[0].trim();
+      if (!firstEntry) return null;
+      const parts = firstEntry.split("|");
+      return {
+        display: parts[0].trim(),
+        link: parts[1] ? parts[1].trim() : "#"
+      };
     }
 
     // Fetch data from the Google Sheet and then populate the table.
@@ -242,7 +244,7 @@
       download: true,
       header: true,
       complete: function(results) {
-        // Map the CSV records into our data structure.
+        // Map CSV records into our data structure.
         ibciPatients = results.data.map(record => ({
           patientID: record["Patient ID"],
           year: parseInt(record["Year of Implant"]),
@@ -252,10 +254,9 @@
           age: parseInt(record["Age at Implant"]),
           etiology: record["Etiology of Paralysis"],
           tasks: record["Tasks Performed"],
-          duration: parseInt(record["Duration of Implant"]), // assumed to be in years
-          publications: parsePublications(record["Publications"])
+          firstPublication: parseFirstPublication(record["First Publication"])
         }));
-        // After fetching, sort and populate.
+        // Default sort by patientID.
         sortData(currentSortKey, currentSortDirection);
         populateTable();
         updateSortIndicators();
@@ -267,9 +268,10 @@
       ibciPatients.sort((a, b) => {
         let valA = a[key], valB = b[key];
 
-        if (key === "publications") {
-          valA = (a.publications && a.publications.length) ? a.publications[0].display : "";
-          valB = (b.publications && b.publications.length) ? b.publications[0].display : "";
+        // For the firstPublication column, sort by the display text.
+        if (key === "firstPublication") {
+          valA = a.firstPublication ? a.firstPublication.display : "";
+          valB = b.firstPublication ? b.firstPublication.display : "";
         }
         if (typeof valA === "number" && typeof valB === "number") {
           return (valA - valB) * direction;
@@ -281,7 +283,7 @@
       });
     }
 
-    // When a header is clicked to sort by a given key.
+    // Called when a header is clicked.
     function sortTable(key) {
       if (currentSortKey === key) {
         currentSortDirection = -currentSortDirection;
@@ -294,9 +296,9 @@
       updateSortIndicators();
     }
 
-    // Update sort indicators and add visual highlight to the sorted column header.
+    // Update sort indicators and highlight active header.
     function updateSortIndicators() {
-      const sortKeys = ["patientID", "year", "institution", "deviceType", "sex", "age", "etiology", "tasks", "duration", "publications"];
+      const sortKeys = ["patientID", "year", "institution", "deviceType", "sex", "age", "etiology", "tasks", "firstPublication"];
       sortKeys.forEach(key => {
         const indicator = document.getElementById("sortIndicator-" + key);
         const th = document.getElementById("th-" + key);
@@ -317,35 +319,39 @@
       ibciPatients.forEach(patient => {
         const row = document.createElement("tr");
 
-        // Create a cell for each column.
-        const createCell = (content) => {
+        // Helper to create cell.
+        function createCell(content) {
           const cell = document.createElement("td");
           cell.textContent = content;
           return cell;
-        };
+        }
 
+        // Patient ID
         row.appendChild(createCell(patient.patientID));
+        // Year of Implant
         row.appendChild(createCell(patient.year));
+        // Institution/Company
         row.appendChild(createCell(patient.institution));
+        // Device Type
         row.appendChild(createCell(patient.deviceType));
+        // Sex
         row.appendChild(createCell(patient.sex));
+        // Age at Implant
         row.appendChild(createCell(patient.age));
+        // Etiology of Paralysis
         row.appendChild(createCell(patient.etiology));
+        // Tasks Performed
         row.appendChild(createCell(patient.tasks));
-        row.appendChild(createCell(patient.duration + " yrs"));
 
-        // Publications cell – display each as "Author et al, Year" (as hyperlink)
+        // First Publication cell
         const pubCell = document.createElement("td");
-        if (patient.publications && patient.publications.length > 0) {
-          const pubItems = patient.publications.map(pub => {
-            const a = document.createElement("a");
-            a.href = pub.link;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            a.textContent = pub.display;
-            return a.outerHTML;
-          });
-          pubCell.innerHTML = pubItems.join("<br>");
+        if (patient.firstPublication) {
+          const anchor = document.createElement("a");
+          anchor.href = patient.firstPublication.link;
+          anchor.target = "_blank";
+          anchor.rel = "noopener noreferrer";
+          anchor.textContent = patient.firstPublication.display;
+          pubCell.appendChild(anchor);
         } else {
           pubCell.textContent = "N/A";
         }
@@ -377,6 +383,7 @@
   </script>
 </body>
 </html>
+
 
 
 
