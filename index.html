@@ -5,9 +5,7 @@
   <title>International iBCI Patient Registry</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- Google Fonts: Söhne is not natively available on Google Fonts, 
-       so here's a fallback to 'Inter' for demonstration. 
-       We include Lora for headings. -->
+  <!-- Google Fonts: Using Lora for headings and Inter as a fallback -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -18,8 +16,6 @@
   <!-- Inline CSS -->
   <style>
     /* =============== BASE RESET & GLOBAL STYLES =============== */
-    /* Derived from your snippet, with minimal necessary rules. */
-
     html,
     body {
       margin: 0;
@@ -37,39 +33,33 @@
       flex-direction: column;
     }
 
-    /* Headings use Lora, per your snippet's style references */
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
+    /* Headings use Lora */
+    h1, h2, h3, h4, h5, h6 {
       font-family: "Lora", serif;
       margin: 0.8em 0 0.4em;
       font-weight: 600;
       color: #373737;
     }
 
-    /* Links */
     a {
       color: #373737;
       text-decoration: underline;
       text-underline-offset: 0.3em;
     }
 
-    /* Basic container */
+    /* Container */
     .container {
       width: 90%;
       max-width: 1200px;
       margin: 0 auto;
       padding-top: 1rem;
       padding-bottom: 1rem;
-      flex: 1; /* main content grows */
+      flex: 1;
     }
 
     /* =============== NAVBAR =============== */
     .navbar {
-      background: #FCFBE8; /* same as body for minimal styling */
+      background: #FCFBE8;
       border-bottom: 1px solid #373737;
       padding: 0.8rem;
     }
@@ -112,21 +102,20 @@
     /* =============== TABLE =============== */
     .table-container {
       overflow-x: auto;
-      background: #fff; /* White table background for contrast */
+      background: #fff;
       border: 1px solid #373737;
       margin-bottom: 2rem;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 600px; /* Ensure the table doesn’t get too narrow */
+      min-width: 600px;
     }
     thead {
       background: #f5f5f5;
       border-bottom: 2px solid #373737;
     }
-    th,
-    td {
+    th, td {
       text-align: left;
       padding: 0.75rem 1rem;
       border-bottom: 1px solid #ddd;
@@ -136,6 +125,12 @@
       font-weight: 600;
       font-family: "Lora", serif;
       color: #373737;
+      cursor: pointer;
+      user-select: none;
+    }
+    th .sort-indicator {
+      margin-left: 0.5rem;
+      font-size: 0.8rem;
     }
     tbody tr:hover {
       background: #fafafa;
@@ -143,8 +138,8 @@
 
     /* =============== FOOTER =============== */
     footer.footer {
-      background: #FCFBE8; /* match body background */
-      border-top: 1px solid #373737; /* subtle line above */
+      background: #FCFBE8;
+      border-top: 1px solid #373737;
       text-align: center;
       padding: 0.5rem;
       font-size: 0.9rem;
@@ -155,19 +150,17 @@
       font-weight: 300;
     }
 
-    /* =============== RESPONSIVE MEDIA QUERIES (Minimal) =============== */
+    /* =============== RESPONSIVE =============== */
     @media (max-width: 600px) {
       .summary-alert {
         font-size: 0.95rem;
       }
-      th,
-      td {
+      th, td {
         font-size: 0.9rem;
       }
     }
   </style>
 </head>
-
 <body>
   <!-- Navbar -->
   <nav class="navbar">
@@ -176,7 +169,7 @@
     </div>
   </nav>
 
-  <!-- Main content container -->
+  <!-- Main content -->
   <div class="container">
     <!-- Summary Alert -->
     <div class="summary-alert">
@@ -185,12 +178,7 @@
 
     <!-- Search Bar -->
     <div class="search-bar">
-      <input
-        type="text"
-        id="searchInput"
-        placeholder="Search by patient ID, device, lab, or publication..."
-        onkeyup="filterTable()"
-      />
+      <input type="text" id="searchInput" placeholder="Search by any field..." onkeyup="filterTable()" />
     </div>
 
     <!-- Table Container -->
@@ -198,14 +186,19 @@
       <table id="ibciTable">
         <thead>
           <tr>
-            <th>Patient ID</th>
-            <th>Device Type</th>
-            <th>Lab / Institution</th>
-            <th>Publications</th>
+            <th onclick="sortTable('year')">Year of Implant <span id="sortIndicator-year" class="sort-indicator"></span></th>
+            <th onclick="sortTable('patientID')">Patient ID <span id="sortIndicator-patientID" class="sort-indicator"></span></th>
+            <th onclick="sortTable('institution')">Institution / Center <span id="sortIndicator-institution" class="sort-indicator"></span></th>
+            <th onclick="sortTable('deviceType')">Device Type <span id="sortIndicator-deviceType" class="sort-indicator"></span></th>
+            <th onclick="sortTable('sex')">Sex <span id="sortIndicator-sex" class="sort-indicator"></span></th>
+            <th onclick="sortTable('age')">Age at Implant <span id="sortIndicator-age" class="sort-indicator"></span></th>
+            <th onclick="sortTable('etiology')">Etiology of Paralysis <span id="sortIndicator-etiology" class="sort-indicator"></span></th>
+            <th onclick="sortTable('tasks')">Tasks Performed <span id="sortIndicator-tasks" class="sort-indicator"></span></th>
+            <th onclick="sortTable('publications')">Publications <span id="sortIndicator-publications" class="sort-indicator"></span></th>
           </tr>
         </thead>
         <tbody id="ibciTableBody">
-          <!-- Rows Populated by JS -->
+          <!-- Rows will be inserted here via JavaScript -->
         </tbody>
       </table>
     </div>
@@ -218,103 +211,182 @@
 
   <!-- In-line JavaScript -->
   <script>
-    // Example Data
+    // Global sort state variables
+    let currentSortKey = "year";
+    // For "year", default is descending (most recent first); for others, default ascending.
+    let currentSortDirection = -1; 
+
+    // Example Data – note that additional fields have been added.
     const ibciPatients = [
       {
-        patientID: "P1",
-        deviceType: "Utah Array",
-        lab: "BrainGate Consortium",
-        publications: [
-          {
-            title: "Neuronal ensemble control of prosthetic devices...",
-            link: "https://www.nature.com/articles/nature07479"
-          },
-          {
-            title: "High-performance communication by people with paralysis...",
-            link: "https://elifesciences.org/articles/18554"
-          }
-        ]
-      },
-      {
-        patientID: "P2",
-        deviceType: "ECoG Grid",
-        lab: "Grenoble University",
-        publications: [
-          {
-            title: "Fully Implanted Brain–Computer Interface in a Locked-In Patient...",
-            link: "https://www.nejm.org/doi/10.1056/NEJMoa1608085"
-          }
-        ]
-      },
-      {
+        year: 2021,
         patientID: "P3",
+        institution: "Synchron Center, Melbourne",
         deviceType: "Endovascular Stentrode",
-        lab: "Synchron / Melbourne",
+        sex: "Male",
+        age: 40,
+        etiology: "Spinal Cord Injury",
+        tasks: "Robotic arm control, digital tasks",
         publications: [
-          {
-            title: "Endovascular motor neuroprosthesis for severe paralysis...",
-            link: "https://jnis.bmj.com/content/13/2/102"
-          }
+          { display: "Oxley et al, 2021", link: "https://jnis.bmj.com/content/13/2/102" }
+        ]
+      },
+      {
+        year: 2016,
+        patientID: "P2",
+        institution: "Grenoble University Hospital",
+        deviceType: "ECoG Grid",
+        sex: "Female",
+        age: 50,
+        etiology: "Stroke",
+        tasks: "Communication, target selection",
+        publications: [
+          { display: "Vansteensel et al, 2016", link: "https://www.nejm.org/doi/10.1056/NEJMoa1608085" }
+        ]
+      },
+      {
+        year: 2020,
+        patientID: "P1",
+        institution: "BrainGate Consortium (John Radcliffe Hospital)",
+        deviceType: "Utah Array",
+        sex: "Male",
+        age: 45,
+        etiology: "Amyotrophic Lateral Sclerosis",
+        tasks: "Cursor control, typing",
+        publications: [
+          { display: "Hochberg et al, 2006", link: "https://www.nature.com/articles/nature07479" },
+          { display: "Brandman et al, 2018", link: "https://elifesciences.org/articles/18554" }
         ]
       }
-      // Add or modify as needed
+      // Additional records can be added here.
     ];
 
-    // Populate table on load
+    // When the page loads, sort the data by default and populate the table.
     window.onload = function() {
+      sortData(currentSortKey, currentSortDirection);
       populateTable();
+      updateSortIndicators();
     };
 
-    // Insert rows
+    // Function to sort the ibciPatients array.
+    function sortData(key, direction) {
+      ibciPatients.sort((a, b) => {
+        let valA = a[key];
+        let valB = b[key];
+
+        // For the "publications" column, sort by the first publication's display text.
+        if (key === "publications") {
+          valA = (a.publications && a.publications.length) ? a.publications[0].display : "";
+          valB = (b.publications && b.publications.length) ? b.publications[0].display : "";
+        }
+
+        // If sorting by year, implement a secondary sort by institution (alphabetically ascending).
+        if (key === "year") {
+          if (valA === valB) {
+            let instA = a.institution.toLowerCase();
+            let instB = b.institution.toLowerCase();
+            return instA.localeCompare(instB) * 1;
+          }
+        }
+
+        // Determine if the value is numeric.
+        if (typeof valA === "number" && typeof valB === "number") {
+          return (valA - valB) * direction;
+        } else {
+          // Convert to string and compare case-insensitively.
+          valA = String(valA).toLowerCase();
+          valB = String(valB).toLowerCase();
+          return valA.localeCompare(valB) * direction;
+        }
+      });
+    }
+
+    // Called when a header is clicked to sort by a given key.
+    function sortTable(key) {
+      // If the column is already sorted, toggle direction; otherwise, set new key.
+      if (currentSortKey === key) {
+        currentSortDirection = -currentSortDirection;
+      } else {
+        currentSortKey = key;
+        // Default sort direction: for year use descending (-1), otherwise ascending (1)
+        currentSortDirection = (key === "year") ? -1 : 1;
+      }
+      sortData(currentSortKey, currentSortDirection);
+      populateTable();
+      updateSortIndicators();
+    }
+
+    // Update sort indicators (simple arrow icons) in header cells.
+    function updateSortIndicators() {
+      // List of sort keys matching our header IDs.
+      const sortKeys = ["year", "patientID", "institution", "deviceType", "sex", "age", "etiology", "tasks", "publications"];
+      sortKeys.forEach(key => {
+        const indicator = document.getElementById("sortIndicator-" + key);
+        if (key === currentSortKey) {
+          indicator.textContent = currentSortDirection === 1 ? "▲" : "▼";
+        } else {
+          indicator.textContent = "";
+        }
+      });
+    }
+
+    // Populate the table body with the current ibciPatients array.
     function populateTable() {
       const tbody = document.getElementById("ibciTableBody");
       tbody.innerHTML = "";
 
-      ibciPatients.forEach((patient) => {
+      ibciPatients.forEach(patient => {
         const row = document.createElement("tr");
 
+        // Create cells for each column.
+        const createCell = (text) => {
+          const cell = document.createElement("td");
+          cell.textContent = text;
+          return cell;
+        };
+
+        // Year of Implant
+        row.appendChild(createCell(patient.year));
         // Patient ID
-        const tdID = document.createElement("td");
-        tdID.textContent = patient.patientID;
-        row.appendChild(tdID);
-
-        // Device
-        const tdDevice = document.createElement("td");
-        tdDevice.textContent = patient.deviceType;
-        row.appendChild(tdDevice);
-
-        // Lab
-        const tdLab = document.createElement("td");
-        tdLab.textContent = patient.lab;
-        row.appendChild(tdLab);
-
-        // Publications
-        const tdPub = document.createElement("td");
+        row.appendChild(createCell(patient.patientID));
+        // Institution / Center
+        row.appendChild(createCell(patient.institution));
+        // Device Type
+        row.appendChild(createCell(patient.deviceType));
+        // Sex
+        row.appendChild(createCell(patient.sex));
+        // Age at Implant
+        row.appendChild(createCell(patient.age));
+        // Etiology
+        row.appendChild(createCell(patient.etiology));
+        // Tasks Performed
+        row.appendChild(createCell(patient.tasks));
+        
+        // Publications: display each as "Author et al, Year" separated by a line break.
+        const pubCell = document.createElement("td");
         if (patient.publications && patient.publications.length > 0) {
-          const ul = document.createElement("ul");
-          ul.style.paddingLeft = "1.2em";
-          ul.style.margin = "0";
-          patient.publications.forEach((pub) => {
-            const li = document.createElement("li");
-            const anchor = document.createElement("a");
-            anchor.href = pub.link;
-            anchor.target = "_blank";
-            anchor.rel = "noopener noreferrer";
-            anchor.textContent = pub.title;
-            li.appendChild(anchor);
-            ul.appendChild(li);
+          // For each publication, create a link.
+          const pubItems = patient.publications.map(pub => {
+            // Create an anchor element.
+            const a = document.createElement("a");
+            a.href = pub.link;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = pub.display;
+            return a.outerHTML;
           });
-          tdPub.appendChild(ul);
+          // Join with <br> for a compact display.
+          pubCell.innerHTML = pubItems.join("<br>");
         } else {
-          tdPub.textContent = "N/A";
+          pubCell.textContent = "N/A";
         }
-        row.appendChild(tdPub);
+        row.appendChild(pubCell);
 
         tbody.appendChild(row);
       });
     }
 
-    // Filter table by text
+    // Filter table rows based on search input.
     function filterTable() {
       const input = document.getElementById("searchInput");
       const filter = input.value.toLowerCase();
@@ -325,10 +397,8 @@
         const row = rows[i];
         const cells = row.getElementsByTagName("td");
         let match = false;
-
         for (let j = 0; j < cells.length; j++) {
-          const cellValue = cells[j].textContent.toLowerCase();
-          if (cellValue.indexOf(filter) > -1) {
+          if (cells[j].textContent.toLowerCase().indexOf(filter) > -1) {
             match = true;
             break;
           }
@@ -339,5 +409,6 @@
   </script>
 </body>
 </html>
+
 
 
