@@ -28,7 +28,7 @@
       font-size: 16px;
       line-height: 1.4;
       font-family: "Inter", "Söhne", sans-serif;
-      background-color: #FCFBE8;
+      background-color: #FCFBE8; /* Muted background */
       color: #373737;
       -webkit-font-smoothing: antialiased;
       display: flex;
@@ -215,17 +215,18 @@
 
   <!-- Inline JavaScript -->
   <script>
-    // Global sort state – default sort by patientID.
-    let currentSortKey = "patientID";
+    // Default sort by "year" (ascending), but we won't highlight the default column.
+    let currentSortKey = "year";
     let currentSortDirection = 1; // 1 for ascending, -1 for descending
+    let userHasClickedSort = false; // We'll only show highlight once user manually clicks a column
 
     // This will hold the patient data from the spreadsheet.
     let ibciPatients = [];
 
-    // Published Google Sheets CSV URL.
+    // Google Sheets CSV URL ID or full CSV link
     const googleSheetCSVUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9vV_4d26H9_aqUAcorYkCpOaaJsoIF3ocok3JVQO27KiQ8wCqQdB796qVvgmUQ9hzYUQDcO5JGR1b/pub?output=csv";
 
-    // Parse the "First Publication" field: split by semicolon and take only the first entry.
+    // Parse the "First Publication" field: we show only the first pub entry (expected format: "Smith et al, 2020|https://url; Another|https://...")
     function parseFirstPublication(pubString) {
       if (!pubString) return null;
       const entries = pubString.split(";");
@@ -238,16 +239,11 @@
       };
     }
 
-    // Fetch data from the Google Sheet.
+    // Fetch data from the Google Sheet and then populate the table.
     Papa.parse(googleSheetCSVUrl, {
       download: true,
       header: true,
       complete: function(results) {
-        if (results.errors.length) {
-          console.error("Errors parsing CSV:", results.errors);
-        }
-        console.log("Parsed CSV results:", results);
-
         // Map CSV records into our data structure.
         ibciPatients = results.data.map(record => ({
           patientID: record["Patient ID"],
@@ -261,52 +257,61 @@
           firstPublication: parseFirstPublication(record["First Publication"])
         }));
 
-        // Default sort by patientID.
+        // Sort by "year" ascending, but do NOT highlight since user hasn't clicked yet.
         sortData(currentSortKey, currentSortDirection);
         populateTable();
-        updateSortIndicators();
-      },
-      error: function(err) {
-        console.error("Papa Parse error:", err);
+        // We do NOT call updateSortIndicators() here, so no highlight on default load.
       }
     });
 
-    // Generic data sort function.
+    // Generic data sort function
     function sortData(key, direction) {
       ibciPatients.sort((a, b) => {
         let valA = a[key], valB = b[key];
+
+        // For the firstPublication column, sort by display text if user chooses to sort that column.
         if (key === "firstPublication") {
           valA = a.firstPublication ? a.firstPublication.display : "";
           valB = b.firstPublication ? b.firstPublication.display : "";
         }
+
         if (typeof valA === "number" && typeof valB === "number") {
           return (valA - valB) * direction;
         } else {
-          return String(valA).toLowerCase().localeCompare(String(valB).toLowerCase()) * direction;
+          valA = String(valA).toLowerCase();
+          valB = String(valB).toLowerCase();
+          return valA.localeCompare(valB) * direction;
         }
       });
     }
 
-    // Called when a header is clicked.
+    // Called when user clicks a header.
     function sortTable(key) {
+      // Mark that user has clicked a column, so we'll highlight
+      userHasClickedSort = true;
+
       if (currentSortKey === key) {
         currentSortDirection = -currentSortDirection;
       } else {
         currentSortKey = key;
-        currentSortDirection = 1;
+        currentSortDirection = 1; // reset to ascending on new column
       }
       sortData(currentSortKey, currentSortDirection);
       populateTable();
       updateSortIndicators();
     }
 
-    // Update sort indicators and highlight active header.
+    // Highlight the sorted column only if userHasClickedSort is true.
     function updateSortIndicators() {
-      const sortKeys = ["patientID", "year", "institution", "deviceType", "sex", "age", "etiology", "tasks", "firstPublication"];
+      if (!userHasClickedSort) return; // no highlight on default load
+
+      const sortKeys = ["patientID","year","institution","deviceType","sex","age","etiology","tasks","firstPublication"];
       sortKeys.forEach(key => {
         const indicator = document.getElementById("sortIndicator-" + key);
         const th = document.getElementById("th-" + key);
+
         if (key === currentSortKey) {
+          // Show arrow
           indicator.textContent = currentSortDirection === 1 ? "▲" : "▼";
           th.classList.add("sorted");
         } else {
@@ -316,13 +321,15 @@
       });
     }
 
-    // Populate the table with data.
+    // Populate the table rows
     function populateTable() {
       const tbody = document.getElementById("ibciTableBody");
       tbody.innerHTML = "";
+
       ibciPatients.forEach(patient => {
         const row = document.createElement("tr");
 
+        // Helper to create a cell
         function createCell(content) {
           const cell = document.createElement("td");
           cell.textContent = content;
@@ -330,23 +337,23 @@
         }
 
         // Patient ID
-        row.appendChild(createCell(patient.patientID));
-        // Year of Implant
-        row.appendChild(createCell(patient.year));
-        // Institution/Company
-        row.appendChild(createCell(patient.institution));
+        row.appendChild(createCell(patient.patientID || "N/A"));
+        // Year
+        row.appendChild(createCell(patient.year || "N/A"));
+        // Institution
+        row.appendChild(createCell(patient.institution || "N/A"));
         // Device Type
-        row.appendChild(createCell(patient.deviceType));
+        row.appendChild(createCell(patient.deviceType || "N/A"));
         // Sex
-        row.appendChild(createCell(patient.sex));
-        // Age at Implant
-        row.appendChild(createCell(patient.age));
+        row.appendChild(createCell(patient.sex || "N/A"));
+        // Age
+        row.appendChild(createCell(patient.age || "N/A"));
         // Etiology of Paralysis
-        row.appendChild(createCell(patient.etiology));
+        row.appendChild(createCell(patient.etiology || "N/A"));
         // Tasks Performed
-        row.appendChild(createCell(patient.tasks));
+        row.appendChild(createCell(patient.tasks || "N/A"));
 
-        // First Publication cell
+        // First Publication
         const pubCell = document.createElement("td");
         if (patient.firstPublication) {
           const anchor = document.createElement("a");
@@ -364,12 +371,13 @@
       });
     }
 
-    // Filter table rows based on the search input.
+    // Filter table rows based on search input
     function filterTable() {
       const input = document.getElementById("searchInput");
       const filter = input.value.toLowerCase();
       const tbody = document.getElementById("ibciTableBody");
       const rows = tbody.getElementsByTagName("tr");
+
       for (let i = 0; i < rows.length; i++) {
         let row = rows[i];
         let cells = row.getElementsByTagName("td");
@@ -386,4 +394,5 @@
   </script>
 </body>
 </html>
+
 
