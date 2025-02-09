@@ -28,7 +28,7 @@
       font-size: 16px;
       line-height: 1.4;
       font-family: "Inter", "Söhne", sans-serif;
-      background-color: #FCFBE8; /* Muted background */
+      background-color: #FCFBE8;
       color: #373737;
       -webkit-font-smoothing: antialiased;
       display: flex;
@@ -193,7 +193,6 @@
             <th id="th-year" onclick="sortTable('year')">Year of Implant <span id="sortIndicator-year" class="sort-indicator"></span></th>
             <th id="th-institution" onclick="sortTable('institution')">Institution/Company <span id="sortIndicator-institution" class="sort-indicator"></span></th>
             <th id="th-deviceType" onclick="sortTable('deviceType')">Device Type <span id="sortIndicator-deviceType" class="sort-indicator"></span></th>
-            <th id="th-implantLocation" onclick="sortTable('implantLocation')">Implant Location <span id="sortIndicator-implantLocation" class="sort-indicator"></span></th>
             <th id="th-sex" onclick="sortTable('sex')">Sex <span id="sortIndicator-sex" class="sort-indicator"></span></th>
             <th id="th-age" onclick="sortTable('age')">Age at Implant <span id="sortIndicator-age" class="sort-indicator"></span></th>
             <th id="th-etiology" onclick="sortTable('etiology')">Etiology of Paralysis <span id="sortIndicator-etiology" class="sort-indicator"></span></th>
@@ -216,19 +215,17 @@
 
   <!-- Inline JavaScript -->
   <script>
-    // Global sort state – default sort by "patientID".
-    // When sorting by patientID, we use a composite sort: first by Year, then by Patient ID.
+    // Global sort state – default sort by patientID.
     let currentSortKey = "patientID";
     let currentSortDirection = 1; // 1 for ascending, -1 for descending
 
     // This will hold the patient data from the spreadsheet.
     let ibciPatients = [];
 
-    // Google Sheets CSV URL – REPLACE "your-spreadsheet-id" with your actual ID if needed.
-    const googleSheetCSVUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9vV_4d26H9_aqUAcorYkCpOaaJsoIF3ocok3JVQO27KiQ8wCqQdB796qVvgmUQ9hzYUQDcO5JGR1b/pubhtml?gid=0&single=true";
+    // Replace with your actual published Google Sheets CSV URL.
+    const googleSheetCSVUrl = "https://docs.google.com/spreadsheets/d/your-spreadsheet-id/pub?output=csv";
 
     // Parse the "First Publication" field: split by semicolon and take only the first entry.
-    // Expected format: "Author et al, Year|https://link; Other pub|https://link2"
     function parseFirstPublication(pubString) {
       if (!pubString) return null;
       const entries = pubString.split(";");
@@ -241,54 +238,50 @@
       };
     }
 
-    // Fetch data from the Google Sheet and then populate the table.
+    // Fetch data from the Google Sheet.
     Papa.parse(googleSheetCSVUrl, {
       download: true,
       header: true,
       complete: function(results) {
+        if (results.errors.length) {
+          console.error("Errors parsing CSV:", results.errors);
+        }
+        console.log("Parsed CSV results:", results);
+
         // Map CSV records into our data structure.
         ibciPatients = results.data.map(record => ({
           patientID: record["Patient ID"],
           year: parseInt(record["Year of Implant"]),
           institution: record["Institution/Company"],
           deviceType: record["Device Type"],
-          implantLocation: record["Implant Location"],
           sex: record["Sex"],
           age: parseInt(record["Age at Implant"]),
           etiology: record["Etiology of Paralysis"],
           tasks: record["Tasks Performed"],
           firstPublication: parseFirstPublication(record["First Publication"])
         }));
-        // Default sort by patientID using our composite sort.
+
+        // Default sort by patientID.
         sortData(currentSortKey, currentSortDirection);
         populateTable();
         updateSortIndicators();
+      },
+      error: function(err) {
+        console.error("Papa Parse error:", err);
       }
     });
 
     // Generic data sort function.
     function sortData(key, direction) {
       ibciPatients.sort((a, b) => {
-        // If sorting by patientID, implement a composite sort:
-        if (key === "patientID") {
-          if (a.year !== b.year) {
-            return (a.year - b.year) * direction;
-          } else {
-            return String(a.patientID).toLowerCase().localeCompare(String(b.patientID).toLowerCase()) * direction;
-          }
-        }
-        // For the firstPublication column, sort by the display text.
-        if (key === "firstPublication") {
-          let valA = a.firstPublication ? a.firstPublication.display : "";
-          let valB = b.firstPublication ? b.firstPublication.display : "";
-          return valA.toLowerCase().localeCompare(valB.toLowerCase()) * direction;
-        }
-        // For numeric columns (year, age) the values are already numbers.
         let valA = a[key], valB = b[key];
+        if (key === "firstPublication") {
+          valA = a.firstPublication ? a.firstPublication.display : "";
+          valB = b.firstPublication ? b.firstPublication.display : "";
+        }
         if (typeof valA === "number" && typeof valB === "number") {
           return (valA - valB) * direction;
         } else {
-          // Compare as strings
           return String(valA).toLowerCase().localeCompare(String(valB).toLowerCase()) * direction;
         }
       });
@@ -309,7 +302,7 @@
 
     // Update sort indicators and highlight active header.
     function updateSortIndicators() {
-      const sortKeys = ["patientID", "year", "institution", "deviceType", "implantLocation", "sex", "age", "etiology", "tasks", "firstPublication"];
+      const sortKeys = ["patientID", "year", "institution", "deviceType", "sex", "age", "etiology", "tasks", "firstPublication"];
       sortKeys.forEach(key => {
         const indicator = document.getElementById("sortIndicator-" + key);
         const th = document.getElementById("th-" + key);
@@ -330,33 +323,30 @@
       ibciPatients.forEach(patient => {
         const row = document.createElement("tr");
 
-        // Helper to create a table cell.
         function createCell(content) {
           const cell = document.createElement("td");
           cell.textContent = content;
           return cell;
         }
 
-        // Create cells in the desired order:
-        // 1. Patient ID
+        // Patient ID
         row.appendChild(createCell(patient.patientID));
-        // 2. Year of Implant
+        // Year of Implant
         row.appendChild(createCell(patient.year));
-        // 3. Institution/Company
+        // Institution/Company
         row.appendChild(createCell(patient.institution));
-        // 4. Device Type
+        // Device Type
         row.appendChild(createCell(patient.deviceType));
-        // 5. Implant Location
-        row.appendChild(createCell(patient.implantLocation || "N/A"));
-        // 6. Sex
+        // Sex
         row.appendChild(createCell(patient.sex));
-        // 7. Age at Implant
+        // Age at Implant
         row.appendChild(createCell(patient.age));
-        // 8. Etiology of Paralysis
+        // Etiology of Paralysis
         row.appendChild(createCell(patient.etiology));
-        // 9. Tasks Performed
+        // Tasks Performed
         row.appendChild(createCell(patient.tasks));
-        // 10. First Publication
+
+        // First Publication cell
         const pubCell = document.createElement("td");
         if (patient.firstPublication) {
           const anchor = document.createElement("a");
@@ -396,3 +386,4 @@
   </script>
 </body>
 </html>
+
