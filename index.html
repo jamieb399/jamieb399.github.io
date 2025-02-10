@@ -13,7 +13,7 @@
     rel="stylesheet"
   />
 
-  <!-- Include Papa Parse Library from CDN -->
+  <!-- Include Papa Parse Library from a CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
   <!-- Inline CSS -->
@@ -51,7 +51,7 @@
       margin: 0 auto;
       padding-top: 1rem;
       padding-bottom: 1rem;
-      flex: 1;
+      flex: 1; /* main content flex */
     }
 
     /* =============== NAVBAR =============== */
@@ -106,7 +106,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 800px;
+      min-width: 900px;
     }
     thead {
       background: #f5f5f5;
@@ -189,15 +189,50 @@
       <table id="ibciTable">
         <thead>
           <tr>
-            <th id="th-patientID" onclick="sortTable('patientID')">Patient ID <span id="sortIndicator-patientID" class="sort-indicator"></span></th>
-            <th id="th-year" onclick="sortTable('year')">Year of Implant <span id="sortIndicator-year" class="sort-indicator"></span></th>
-            <th id="th-institution" onclick="sortTable('institution')">Institution/Company <span id="sortIndicator-institution" class="sort-indicator"></span></th>
-            <th id="th-deviceType" onclick="sortTable('deviceType')">Device Type <span id="sortIndicator-deviceType" class="sort-indicator"></span></th>
-            <th id="th-sex" onclick="sortTable('sex')">Sex <span id="sortIndicator-sex" class="sort-indicator"></span></th>
-            <th id="th-age" onclick="sortTable('age')">Age at Implant <span id="sortIndicator-age" class="sort-indicator"></span></th>
-            <th id="th-etiology" onclick="sortTable('etiology')">Etiology of Paralysis <span id="sortIndicator-etiology" class="sort-indicator"></span></th>
-            <th id="th-tasks" onclick="sortTable('tasks')">Tasks Performed <span id="sortIndicator-tasks" class="sort-indicator"></span></th>
-            <th id="th-firstPublication" onclick="sortTable('firstPublication')">First Publication <span id="sortIndicator-firstPublication" class="sort-indicator"></span></th>
+            <th id="th-patientID" onclick="sortTable('patientID')">
+              Patient ID
+              <span id="sortIndicator-patientID" class="sort-indicator"></span>
+            </th>
+            <th id="th-originalID" onclick="sortTable('originalID')">
+              Original ID
+              <span id="sortIndicator-originalID" class="sort-indicator"></span>
+            </th>
+            <th id="th-year" onclick="sortTable('year')">
+              Year of Implant
+              <span id="sortIndicator-year" class="sort-indicator"></span>
+            </th>
+            <th id="th-institution" onclick="sortTable('institution')">
+              Institution/Company
+              <span id="sortIndicator-institution" class="sort-indicator"></span>
+            </th>
+            <th id="th-deviceType" onclick="sortTable('deviceType')">
+              Device Type
+              <span id="sortIndicator-deviceType" class="sort-indicator"></span>
+            </th>
+            <th id="th-location" onclick="sortTable('location')">
+              Implant Location
+              <span id="sortIndicator-location" class="sort-indicator"></span>
+            </th>
+            <th id="th-sex" onclick="sortTable('sex')">
+              Sex
+              <span id="sortIndicator-sex" class="sort-indicator"></span>
+            </th>
+            <th id="th-age" onclick="sortTable('age')">
+              Age at Implant
+              <span id="sortIndicator-age" class="sort-indicator"></span>
+            </th>
+            <th id="th-etiology" onclick="sortTable('etiology')">
+              Etiology of Paralysis
+              <span id="sortIndicator-etiology" class="sort-indicator"></span>
+            </th>
+            <th id="th-tasks" onclick="sortTable('tasks')">
+              Tasks Performed
+              <span id="sortIndicator-tasks" class="sort-indicator"></span>
+            </th>
+            <th id="th-firstPublication" onclick="sortTable('firstPublication')">
+              First Publication
+              <span id="sortIndicator-firstPublication" class="sort-indicator"></span>
+            </th>
           </tr>
         </thead>
         <tbody id="ibciTableBody">
@@ -215,18 +250,18 @@
 
   <!-- Inline JavaScript -->
   <script>
-    // Default sort by "year" (ascending), but we won't highlight the default column.
+    // Default sort by "year" ascending, with no highlight on initial load.
     let currentSortKey = "year";
-    let currentSortDirection = 1; // 1 for ascending, -1 for descending
-    let userHasClickedSort = false; // We'll only show highlight once user manually clicks a column
+    let currentSortDirection = 1; // 1 => ascending, -1 => descending
+    let userHasClickedSort = false;
 
-    // This will hold the patient data from the spreadsheet.
+    // We'll store the data from the Google Sheet here.
     let ibciPatients = [];
 
-    // Google Sheets CSV URL ID or full CSV link
+    // Google Sheets CSV URL (you must replace with your live published CSV link)
     const googleSheetCSVUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS9vV_4d26H9_aqUAcorYkCpOaaJsoIF3ocok3JVQO27KiQ8wCqQdB796qVvgmUQ9hzYUQDcO5JGR1b/pub?output=csv";
 
-    // Parse the "First Publication" field: we show only the first pub entry (expected format: "Smith et al, 2020|https://url; Another|https://...")
+    // Parse the "First Publication" field; we show a single entry: "Smith et al, 2020|https://..."
     function parseFirstPublication(pubString) {
       if (!pubString) return null;
       const entries = pubString.split(";");
@@ -239,17 +274,19 @@
       };
     }
 
-    // Fetch data from the Google Sheet and then populate the table.
+    // Fetch data from the Google Sheet in CSV format using PapaParse
     Papa.parse(googleSheetCSVUrl, {
       download: true,
       header: true,
       complete: function(results) {
-        // Map CSV records into our data structure.
+        // Transform the CSV rows
         ibciPatients = results.data.map(record => ({
           patientID: record["Patient ID"],
+          originalID: record["Original ID"],
           year: parseInt(record["Year of Implant"]),
           institution: record["Institution/Company"],
           deviceType: record["Device Type"],
+          location: record["Implant Location"],
           sex: record["Sex"],
           age: parseInt(record["Age at Implant"]),
           etiology: record["Etiology of Paralysis"],
@@ -257,10 +294,10 @@
           firstPublication: parseFirstPublication(record["First Publication"])
         }));
 
-        // Sort by "year" ascending, but do NOT highlight since user hasn't clicked yet.
+        // Sort by year ascending, no highlight
         sortData(currentSortKey, currentSortDirection);
         populateTable();
-        // We do NOT call updateSortIndicators() here, so no highlight on default load.
+        // We won't call updateSortIndicators() to avoid highlighting the default column
       }
     });
 
@@ -269,7 +306,7 @@
       ibciPatients.sort((a, b) => {
         let valA = a[key], valB = b[key];
 
-        // For the firstPublication column, sort by display text if user chooses to sort that column.
+        // For firstPublication, sort by its "display" text
         if (key === "firstPublication") {
           valA = a.firstPublication ? a.firstPublication.display : "";
           valB = b.firstPublication ? b.firstPublication.display : "";
@@ -285,33 +322,39 @@
       });
     }
 
-    // Called when user clicks a header.
+    // Handle header click
     function sortTable(key) {
-      // Mark that user has clicked a column, so we'll highlight
+      // The user has now manually clicked a column -> highlight is allowed
       userHasClickedSort = true;
 
       if (currentSortKey === key) {
+        // If the same column is clicked again, toggle ascending/descending
         currentSortDirection = -currentSortDirection;
       } else {
         currentSortKey = key;
-        currentSortDirection = 1; // reset to ascending on new column
+        currentSortDirection = 1; // reset to ascending
       }
+
       sortData(currentSortKey, currentSortDirection);
       populateTable();
       updateSortIndicators();
     }
 
-    // Highlight the sorted column only if userHasClickedSort is true.
+    // Update column highlight & arrow, only if userHasClickedSort is true
     function updateSortIndicators() {
-      if (!userHasClickedSort) return; // no highlight on default load
+      if (!userHasClickedSort) return;
 
-      const sortKeys = ["patientID","year","institution","deviceType","sex","age","etiology","tasks","firstPublication"];
+      // The column keys
+      const sortKeys = [
+        "patientID","originalID","year","institution","deviceType","location",
+        "sex","age","etiology","tasks","firstPublication"
+      ];
+
       sortKeys.forEach(key => {
         const indicator = document.getElementById("sortIndicator-" + key);
         const th = document.getElementById("th-" + key);
 
         if (key === currentSortKey) {
-          // Show arrow
           indicator.textContent = currentSortDirection === 1 ? "▲" : "▼";
           th.classList.add("sorted");
         } else {
@@ -321,7 +364,7 @@
       });
     }
 
-    // Populate the table rows
+    // Insert table rows into DOM
     function populateTable() {
       const tbody = document.getElementById("ibciTableBody");
       tbody.innerHTML = "";
@@ -329,31 +372,35 @@
       ibciPatients.forEach(patient => {
         const row = document.createElement("tr");
 
-        // Helper to create a cell
+        // Helper cell creation
         function createCell(content) {
           const cell = document.createElement("td");
           cell.textContent = content;
           return cell;
         }
 
-        // Patient ID
+        // 1. Patient ID
         row.appendChild(createCell(patient.patientID || "N/A"));
-        // Year
+        // 2. Original ID
+        row.appendChild(createCell(patient.originalID || "N/A"));
+        // 3. Year
         row.appendChild(createCell(patient.year || "N/A"));
-        // Institution
+        // 4. Institution
         row.appendChild(createCell(patient.institution || "N/A"));
-        // Device Type
+        // 5. Device Type
         row.appendChild(createCell(patient.deviceType || "N/A"));
-        // Sex
+        // 6. Implant Location
+        row.appendChild(createCell(patient.location || "N/A"));
+        // 7. Sex
         row.appendChild(createCell(patient.sex || "N/A"));
-        // Age
+        // 8. Age
         row.appendChild(createCell(patient.age || "N/A"));
-        // Etiology of Paralysis
+        // 9. Etiology
         row.appendChild(createCell(patient.etiology || "N/A"));
-        // Tasks Performed
+        // 10. Tasks Performed
         row.appendChild(createCell(patient.tasks || "N/A"));
 
-        // First Publication
+        // 11. First Publication
         const pubCell = document.createElement("td");
         if (patient.firstPublication) {
           const anchor = document.createElement("a");
@@ -371,7 +418,7 @@
       });
     }
 
-    // Filter table rows based on search input
+    // Filter rows by search input
     function filterTable() {
       const input = document.getElementById("searchInput");
       const filter = input.value.toLowerCase();
@@ -379,8 +426,7 @@
       const rows = tbody.getElementsByTagName("tr");
 
       for (let i = 0; i < rows.length; i++) {
-        let row = rows[i];
-        let cells = row.getElementsByTagName("td");
+        const cells = rows[i].getElementsByTagName("td");
         let match = false;
         for (let j = 0; j < cells.length; j++) {
           if (cells[j].textContent.toLowerCase().indexOf(filter) > -1) {
@@ -388,11 +434,12 @@
             break;
           }
         }
-        row.style.display = match ? "" : "none";
+        rows[i].style.display = match ? "" : "none";
       }
     }
   </script>
 </body>
 </html>
+
 
 
