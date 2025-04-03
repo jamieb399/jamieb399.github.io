@@ -21,6 +21,7 @@
       font-family: "Inter", sans-serif;
       background-color: #FCFBE8;
       color: #373737;
+      -webkit-font-smoothing: antialiased;
     }
     .navbar {
       background: #FCFBE8;
@@ -33,6 +34,8 @@
       font-weight: 600;
       font-family: "Lora", serif;
     }
+
+    /* Container matches index page spacing */
     .container {
       width: 90%;
       max-width: 1200px;
@@ -70,7 +73,6 @@
       box-sizing: border-box;
     }
 
-    /* Placeholder color for consistency */
     .form-container input::placeholder,
     .form-container textarea::placeholder {
       color: #999;
@@ -109,6 +111,17 @@
       font-size: 0.85rem;
       margin-top: 0.3rem;
       color: #555;
+    }
+
+    /* Increase side margins for smaller screens */
+    @media (max-width: 600px) {
+      .container {
+        padding: 1.5rem 0; /* more vertical padding if desired */
+      }
+      .form-container {
+        margin: 2rem 1rem; /* adds left/right space on iPhones */
+        padding: 1.5rem 1rem;
+      }
     }
   </style>
 </head>
@@ -218,3 +231,4 @@
   </footer>
 </body>
 </html>
+
