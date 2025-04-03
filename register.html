@@ -14,7 +14,7 @@
   />
 
   <style>
-    /* Re-use global styles from your main page */
+    /* Global page styles */
     html, body {
       margin: 0;
       padding: 0;
@@ -31,6 +31,7 @@
       margin: 0;
       font-size: 1.5rem;
       font-weight: 600;
+      font-family: "Lora", serif;
     }
     .container {
       width: 90%;
@@ -39,7 +40,7 @@
       padding: 1rem 0;
     }
 
-    /* Form Specific Styles */
+    /* Form container styling */
     .form-container {
       max-width: 600px;
       margin: 2rem auto;
@@ -47,22 +48,35 @@
       border: 1px solid #373737;
       padding: 1.5rem;
     }
+
+    /* Label styling */
     .form-container label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 600;
-      font-family: "Lora", serif;
+      font-family: "Lora", serif; /* Matches headings on main page */
     }
+
+    /* Input, select, textarea styling */
     .form-container input,
     .form-container select,
     .form-container textarea {
       width: 100%;
       padding: 0.8rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
       border: 1px solid #373737;
       font-size: 1rem;
       font-family: "Inter", sans-serif;
+      box-sizing: border-box;
     }
+
+    /* Placeholder color for consistency */
+    .form-container input::placeholder,
+    .form-container textarea::placeholder {
+      color: #999;
+    }
+
+    /* Button styling */
     .btn {
       display: inline-block;
       padding: 0.8rem 1.2rem;
@@ -78,6 +92,7 @@
       background-color: #555;
     }
 
+    /* Footer styling */
     footer.footer {
       background: #FCFBE8;
       border-top: 1px solid #373737;
@@ -105,8 +120,8 @@
   </nav>
 
   <div class="container form-container">
-    <!-- Replace with your Formspree endpoint -->
-    <form action="https://formspree.io/f/mzzejgnv" method="POST"> 
+    <!-- Update action to your actual Formspree endpoint -->
+    <form action="https://formspree.io/f/mzzejgnv" method="POST">
       <label for="labID">Lab ID (if applicable)</label>
       <input
         type="text"
