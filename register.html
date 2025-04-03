@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register New Implant - International iBCI Patient Registry</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Google Fonts (same as main page) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Inter:wght@300;400;500;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* Re-use global styles from your main page */
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", sans-serif;
+      background-color: #FCFBE8;
+      color: #373737;
+    }
+    .navbar {
+      background: #FCFBE8;
+      border-bottom: 1px solid #373737;
+      padding: 0.8rem;
+    }
+    .navbar h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 0;
+    }
+
+    /* Form Specific Styles */
+    .form-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      background: #fff;
+      border: 1px solid #373737;
+      padding: 1.5rem;
+    }
+    .form-container label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-family: "Lora", serif;
+    }
+    .form-container input,
+    .form-container select,
+    .form-container textarea {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border: 1px solid #373737;
+      font-size: 1rem;
+      font-family: "Inter", sans-serif;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.8rem 1.2rem;
+      background-color: #373737;
+      color: #FCFBE8;
+      text-decoration: none;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #555;
+    }
+
+    footer.footer {
+      background: #FCFBE8;
+      border-top: 1px solid #373737;
+      text-align: center;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+      margin-top: 2rem;
+    }
+    footer.footer p {
+      margin: 0;
+    }
+    footer.footer .last-updated {
+      display: block;
+      font-size: 0.85rem;
+      margin-top: 0.3rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <h1>Register New Implant</h1>
+    </div>
+  </nav>
+
+  <div class="container form-container">
+    <!-- Replace with your Formspree endpoint -->
+    <form action="https://formspree.io/f/rxzgjnw" method="POST">
+      <label for="labID">Lab ID (if applicable)</label>
+      <input
+        type="text"
+        id="labID"
+        name="Lab ID"
+        placeholder="Enter Lab ID"
+      />
+
+      <label for="yearOfImplant">Year of Implant</label>
+      <input
+        type="number"
+        id="yearOfImplant"
+        name="Year of Implant"
+        placeholder="e.g., 2025"
+        required
+      />
+
+      <label for="institution">Institution/Company</label>
+      <input
+        type="text"
+        id="institution"
+        name="Institution/Company"
+        placeholder="Enter Institution or Company"
+        required
+      />
+
+      <label for="deviceType">Device Type</label>
+      <input
+        type="text"
+        id="deviceType"
+        name="Device Type"
+        placeholder="Enter Device Type"
+        required
+      />
+
+      <label for="implantLocation">Implant Location</label>
+      <input
+        type="text"
+        id="implantLocation"
+        name="Implant Location"
+        placeholder="Enter Implant Location"
+        required
+      />
+
+      <label for="sex">Sex</label>
+      <select id="sex" name="Sex" required>
+        <option value="">Select</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="ageAtImplant">Age at Implant</label>
+      <input
+        type="number"
+        id="ageAtImplant"
+        name="Age at Implant"
+        placeholder="Enter Age"
+        required
+      />
+
+      <label for="etiology">Etiology of Paralysis</label>
+      <input
+        type="text"
+        id="etiology"
+        name="Etiology of Paralysis"
+        placeholder="Enter Etiology"
+        required
+      />
+
+      <label for="tasksPerformed">Tasks Performed</label>
+      <textarea
+        id="tasksPerformed"
+        name="Tasks Performed"
+        rows="3"
+        placeholder="Enter Tasks Performed"
+      ></textarea>
+
+      <label for="publication">Publication (if applicable)</label>
+      <input
+        type="text"
+        id="publication"
+        name="Publication"
+        placeholder="Enter Publication details"
+      />
+
+      <button type="submit" class="btn">Submit Entry</button>
+    </form>
+  </div>
+
+  <footer class="footer">
+    <p>Created by Jamie Brannigan and Esmee Dohle</p>
+    <span class="last-updated">Last updated: 9th February 2025</span>
+  </footer>
+</body>
+</html>
