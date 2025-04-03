@@ -35,7 +35,7 @@
       font-family: "Lora", serif;
     }
 
-    /* Container matches index page spacing */
+    /* Matches the main page container styling on desktop */
     .container {
       width: 90%;
       max-width: 1200px;
@@ -72,7 +72,6 @@
       font-family: "Inter", sans-serif;
       box-sizing: border-box;
     }
-
     .form-container input::placeholder,
     .form-container textarea::placeholder {
       color: #999;
@@ -115,11 +114,17 @@
 
     /* Increase side margins for smaller screens */
     @media (max-width: 600px) {
+      /* Override .container to ensure symmetrical margins */
       .container {
-        padding: 1.5rem 0; /* more vertical padding if desired */
+        width: auto;
+        margin: 0 1rem;  /* 1rem on left/right for iPhone spacing */
+        padding: 1.5rem 0;
       }
+
+      /* Make the form container full-width within the .container */
       .form-container {
-        margin: 2rem 1rem; /* adds left/right space on iPhones */
+        max-width: 100%;
+        margin: 2rem 0;
         padding: 1.5rem 1rem;
       }
     }
@@ -231,4 +236,5 @@
   </footer>
 </body>
 </html>
+
 
